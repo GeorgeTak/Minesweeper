@@ -35,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -54,43 +53,52 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MinesweeperTheme {
+            val darkTheme = remember { mutableStateOf(true) }
+
+            MinesweeperTheme(darkTheme = darkTheme.value) {
                 var showGame by remember { mutableStateOf(false) }
 
-                if (showGame)
-                {
+                if (showGame) {
                     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                        MinesweeperGame(modifier = Modifier.padding(innerPadding))
+                        MinesweeperGame(
+                            modifier = Modifier.padding(innerPadding),
+                            darkTheme = darkTheme.value
+                        )
                     }
                     ExitButtonWithConfirmation()
                 } else {
-                    StartMenu(onStartGame = { showGame = true })
+                    StartMenu(
+                        onStartGame = { showGame = true },
+                        darkTheme = darkTheme.value,
+                        onThemeChange = { darkTheme.value = it }
+                    )
                 }
             }
         }
     }
 }
-
 @Composable
-fun StartMenu(onStartGame: () -> Unit)
+fun StartMenu(onStartGame: () -> Unit, darkTheme: Boolean, onThemeChange: (Boolean) -> Unit)
 {
 
     var showInstructions by remember { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier.fillMaxSize().background(Color(112, 128, 144)),
+        modifier = Modifier.fillMaxSize().background(if (darkTheme) Color(112, 128, 144) else Color(240, 240, 245)),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     )
     {
         Spacer(modifier = Modifier.height(20.dp))
-        Text(text = "Minesweeper", fontSize = 32.sp, color = Color.Blue, modifier = Modifier.background(color = Color(173,216,230)).border(2.dp, Color(50,82,123)).padding(8.dp))
+        Text(text = "Minesweeper", fontSize = 32.sp, color = if (darkTheme) Color.Blue else Color(0, 0, 180), modifier = Modifier.background(color = if (darkTheme) Color(173,216,230) else Color(200, 230, 255)).border(2.dp, if (darkTheme) Color(50,82,123) else Color(100, 130, 180)).padding(8.dp))
 
         Spacer(modifier = Modifier.height(80.dp))
 
+
         Button(
             onClick = onStartGame,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0,0,139))
+            colors = ButtonDefaults.buttonColors(containerColor = if (darkTheme) Color(0, 0, 139) else Color(30, 144, 255), contentColor = Color.White),
+            shape = RoundedCornerShape(4.dp)
         )
         {
             Text("Start Game", fontSize = 20.sp)
@@ -100,11 +108,25 @@ fun StartMenu(onStartGame: () -> Unit)
 
         Button(
             onClick = { showInstructions = true },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0,0,139))
+            colors = ButtonDefaults.buttonColors(containerColor = if (darkTheme) Color(0,0,139) else Color(30, 144, 255),contentColor = Color.White),
+            shape = RoundedCornerShape(4.dp)
         )
         {
             Text("How to Play", fontSize = 20.sp)
         }
+
+        Spacer(modifier = Modifier.height(80.dp))
+
+        Button(
+            onClick = { onThemeChange(!darkTheme) },
+            colors = ButtonDefaults.buttonColors(containerColor = if (darkTheme) Color(0,0,139) else Color(30, 144, 255),contentColor = Color.White),
+            shape = RoundedCornerShape(4.dp)
+        )
+        {
+            Text(if (darkTheme) "Light Mode" else "Dark Mode", fontSize = 20.sp)
+        }
+
+
 
         Spacer(modifier = Modifier.height(200.dp))
 
@@ -144,7 +166,7 @@ fun InstructionsDialog(onDismiss: () -> Unit) {
 
 
 @Composable
-fun MinesweeperGame(modifier: Modifier = Modifier) {
+fun MinesweeperGame(modifier: Modifier = Modifier,darkTheme: Boolean) {
     val rows = 8
     val cols = 8
     val mineCount = 8
@@ -186,7 +208,7 @@ fun MinesweeperGame(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxSize()
             .padding(8.dp)
-            .background(Color(119, 136, 153), shape = RectangleShape),
+            .background(if (darkTheme) Color(119, 136, 153) else Color(230, 230, 235)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -230,7 +252,7 @@ fun MinesweeperGame(modifier: Modifier = Modifier) {
         }
 
 
-        MinesweeperGrid(gameState.value, message,isPaused.value)
+        MinesweeperGrid(gameState.value, message,isPaused.value ,darkTheme)
 
 
         if (!gameState.value.isGameOver.value && !gameState.value.isGameWon.value)
@@ -256,7 +278,7 @@ fun MinesweeperGame(modifier: Modifier = Modifier) {
             }
 
             Button(onClick = { gameState.value.undoMove() }, enabled = gameState.value.lastMove != null && !gameState.value.undoUsed,
-                    colors = ButtonDefaults.buttonColors(containerColor = if (gameState.value.undoUsed) Color.LightGray else Color(0, 0, 139)),
+                    colors = ButtonDefaults.buttonColors(containerColor = if (gameState.value.undoUsed) Color.LightGray else if (darkTheme) Color(0,0,139) else Color(30, 144, 255),contentColor = Color.White),
                     modifier = Modifier.padding(8.dp))
                 {
                     Text("Undo")
@@ -268,7 +290,7 @@ fun MinesweeperGame(modifier: Modifier = Modifier) {
         }
         if (gameState.value.isGameOver.value || gameState.value.isGameWon.value) {
 
-            Button(onClick = { gameState.value.restartGame() },modifier = Modifier.padding(top = 16.dp))
+            Button(onClick = { gameState.value.restartGame() },modifier = Modifier.padding(top = 16.dp),colors = ButtonDefaults.buttonColors(containerColor = if (darkTheme) Color(0,0,139) else Color(30, 144, 255),contentColor = Color.White))
             {
                 Text("Restart Game")
 
@@ -384,13 +406,13 @@ fun ExitButtonWithConfirmation() {
 }
 
 @Composable
-fun MinesweeperGrid(game: Game, message: MutableState<String>,isPaused: Boolean) {
+fun MinesweeperGrid(game: Game, message: MutableState<String>,isPaused: Boolean,darkTheme: Boolean) {
     Column(modifier = Modifier.border(2.dp, Color.LightGray).padding(2.dp))
     {
         for (row in 0 until game.rows) {
             Row {
                 for (col in 0 until game.cols) {
-                    MineCell(game, row, col,message,isPaused)
+                    MineCell(game, row, col,message,isPaused,darkTheme)
                 }
             }
         }
@@ -398,14 +420,14 @@ fun MinesweeperGrid(game: Game, message: MutableState<String>,isPaused: Boolean)
 }
 
 @Composable
-fun MineCell(game: Game, row: Int, col: Int, message: MutableState<String>,isPaused: Boolean) {
+fun MineCell(game: Game, row: Int, col: Int, message: MutableState<String>,isPaused: Boolean, darkTheme: Boolean) {
     val cellState by game.grid[row][col].state
 
     val backgroundColor = when {
         cellState.isFlagged -> Color.Yellow
-        !cellState.isRevealed -> Color(110, 110, 110)
+        !cellState.isRevealed -> if (darkTheme) Color(110, 110, 110) else Color(170, 170, 170)
         cellState.isMine -> Color.Red
-        else -> Color(192, 192, 192)
+        else -> if (darkTheme) Color(192, 192, 192) else Color(220, 220, 220)
     }
 
     val numberColors = mapOf(
@@ -467,8 +489,18 @@ fun MineCell(game: Game, row: Int, col: Int, message: MutableState<String>,isPau
 @Preview(showBackground = true)
 @Composable
 fun PreviewMinesweeperGame() {
-    MinesweeperTheme {
-        MinesweeperGame()
+    Column {
+        // Dark theme preview
+        MinesweeperTheme(darkTheme = true) {
+            MinesweeperGame(darkTheme = true)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Light theme preview
+        MinesweeperTheme(darkTheme = false) {
+            MinesweeperGame(darkTheme = false)
+        }
     }
 }
 
