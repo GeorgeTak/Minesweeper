@@ -4,9 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -54,6 +57,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val darkTheme = remember { mutableStateOf(true) }
+            val selectedDifficulty = remember { mutableStateOf(Difficulty.EASY) }
 
             MinesweeperTheme(darkTheme = darkTheme.value) {
                 var showGame by remember { mutableStateOf(false) }
@@ -62,7 +66,8 @@ class MainActivity : ComponentActivity() {
                     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                         MinesweeperGame(
                             modifier = Modifier.padding(innerPadding),
-                            darkTheme = darkTheme.value
+                            darkTheme = darkTheme.value,
+                            selectedDifficulty = selectedDifficulty.value
                         )
                     }
                     ExitButtonWithConfirmation()
@@ -70,7 +75,9 @@ class MainActivity : ComponentActivity() {
                     StartMenu(
                         onStartGame = { showGame = true },
                         darkTheme = darkTheme.value,
-                        onThemeChange = { darkTheme.value = it }
+                        onThemeChange = { darkTheme.value = it },
+                        selectedDifficulty = selectedDifficulty.value,
+                        onDifficultyChange = { selectedDifficulty.value = it }
                     )
                 }
             }
@@ -78,13 +85,13 @@ class MainActivity : ComponentActivity() {
     }
 }
 @Composable
-fun StartMenu(onStartGame: () -> Unit, darkTheme: Boolean, onThemeChange: (Boolean) -> Unit)
+fun StartMenu(onStartGame: () -> Unit, darkTheme: Boolean, onThemeChange: (Boolean) -> Unit,selectedDifficulty: Difficulty, onDifficultyChange: (Difficulty) -> Unit)
 {
 
     var showInstructions by remember { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier.fillMaxSize().background(if (darkTheme) Color(112, 128, 144) else Color(240, 240, 245)),
+        modifier = Modifier.fillMaxSize().background(if (darkTheme) Color(112, 128, 144) else Color(210, 255, 230)),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     )
@@ -126,7 +133,11 @@ fun StartMenu(onStartGame: () -> Unit, darkTheme: Boolean, onThemeChange: (Boole
             Text(if (darkTheme) "Light Mode" else "Dark Mode", fontSize = 20.sp)
         }
 
+        Spacer(modifier = Modifier.height(80.dp))
 
+        Text(text = "Select Difficulty", fontSize = 24.sp , color = if(darkTheme) Color.White else Color.Blue)
+        Spacer(modifier = Modifier.height(16.dp))
+        DifficultySelection(selectedDifficulty, onDifficultyChange,darkTheme)
 
         Spacer(modifier = Modifier.height(200.dp))
 
@@ -138,6 +149,36 @@ fun StartMenu(onStartGame: () -> Unit, darkTheme: Boolean, onThemeChange: (Boole
     }
 }
 
+enum class Difficulty(val mines: Int) {
+    EASY(10),
+    MEDIUM(15),
+    HARD(20)
+}
+
+@Composable
+fun DifficultySelection(selectedDifficulty: Difficulty, onDifficultySelected: (Difficulty) -> Unit,darkTheme: Boolean) {
+    Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
+        Difficulty.entries.forEach { difficulty ->
+
+
+            val containerColors = when {
+                (difficulty == selectedDifficulty) && darkTheme -> Color(173, 216, 230)
+                (difficulty == selectedDifficulty) && !darkTheme -> Color(25, 25, 112)
+                (selectedDifficulty != difficulty) && darkTheme -> Color(0, 0, 139)
+                else -> Color(30, 144, 255)
+            }
+            Button(
+                onClick = { onDifficultySelected(difficulty) },
+                colors = ButtonDefaults.buttonColors(containerColor = containerColors,contentColor = Color.White),
+                shape = RoundedCornerShape(4.dp)
+            )
+            {
+                Text(text = difficulty.name)
+            }
+        }
+    }
+}
+
 @Composable
 fun InstructionsDialog(onDismiss: () -> Unit) {
     AlertDialog(
@@ -145,9 +186,9 @@ fun InstructionsDialog(onDismiss: () -> Unit) {
         title = { Text("How to Play") },
         text = {
             Text(
-                "- Minesweeper is a game where you must clear the grid without triggering mines.\n" +
+                "- Minesweeper is a game where you must clear the grid without triggering mines (\uD83D\uDCA3).\n" +
                         "- Use logic to determine which tiles are safe.\n" +
-                        "- Tap a tile to reveal it. Long press to place a flag where you suspect a mine.\n" +
+                        "- Tap a tile to reveal it. Long press to place a flag (\uD83D\uDEA9) where you suspect a mine.\n" +
                         "- You can undo your last move once per game.\n" +
                         "- You can pause the game as many times as you want.\n"+
                         "- The goal is to reveal all non-mine tiles without hitting any mines!"
@@ -166,10 +207,10 @@ fun InstructionsDialog(onDismiss: () -> Unit) {
 
 
 @Composable
-fun MinesweeperGame(modifier: Modifier = Modifier,darkTheme: Boolean) {
+fun MinesweeperGame(modifier: Modifier = Modifier,darkTheme: Boolean,selectedDifficulty: Difficulty) {
     val rows = 8
     val cols = 8
-    val mineCount = 8
+    val mineCount = selectedDifficulty.mines
     val gameState = remember { mutableStateOf(Game(rows, cols, mineCount)) }
     val timeElapsed = remember { mutableStateOf(0) }
     val message = remember { mutableStateOf("") }
@@ -208,7 +249,7 @@ fun MinesweeperGame(modifier: Modifier = Modifier,darkTheme: Boolean) {
         modifier = modifier
             .fillMaxSize()
             .padding(8.dp)
-            .background(if (darkTheme) Color(119, 136, 153) else Color(230, 230, 235)),
+            .background(if (darkTheme) Color(119, 136, 153) else Color(210, 255, 230)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -260,35 +301,47 @@ fun MinesweeperGame(modifier: Modifier = Modifier,darkTheme: Boolean) {
 
             Text(text = "Time: ${timeElapsed.value}s", fontSize = 18.sp, color = Color.DarkGray, modifier = Modifier.padding(8.dp))
 
-            if (message.value.isNotEmpty())
+            Button(onClick = { gameState.value.undoMove() }, enabled = gameState.value.lastMove != null && !gameState.value.undoUsed,
+                colors = ButtonDefaults.buttonColors(containerColor = if (gameState.value.undoUsed) Color.LightGray else if (darkTheme) Color(0,0,139) else Color(30, 144, 255),contentColor = Color.White),
+                modifier = Modifier.padding(8.dp))
             {
-                Text(
-                    text = message.value,
-                    fontSize = 16.sp,
-                    color = Color(0, 0, 139),
-                    fontWeight = FontWeight.Bold,
-                    textDecoration = TextDecoration.Underline,
-                    modifier = Modifier.padding(8.dp)
-                )
+                Text("Undo")
+            }
+
+            if (message.value.isNotEmpty()) {
+                var visible by remember { mutableStateOf(true) }
+
+                AnimatedVisibility(
+                    visible = visible,
+                    exit = fadeOut(animationSpec = tween(durationMillis = 1000))
+                ) {
+                    Text(
+                        text = message.value,
+                        fontSize = 16.sp,
+                        color = Color(0, 0, 139),
+                        fontWeight = FontWeight.Bold,
+                        textDecoration = TextDecoration.Underline,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
 
                 LaunchedEffect(message.value) {
-                    delay(2000L)
+                    delay(1000L)
+                    visible = false
+                    delay(1000L)
                     message.value = ""
                 }
             }
 
-            Button(onClick = { gameState.value.undoMove() }, enabled = gameState.value.lastMove != null && !gameState.value.undoUsed,
-                    colors = ButtonDefaults.buttonColors(containerColor = if (gameState.value.undoUsed) Color.LightGray else if (darkTheme) Color(0,0,139) else Color(30, 144, 255),contentColor = Color.White),
-                    modifier = Modifier.padding(8.dp))
-                {
-                    Text("Undo")
-                }
             
             PauseResumeButton(isPaused)
 
 
         }
-        if (gameState.value.isGameOver.value || gameState.value.isGameWon.value) {
+        if (gameState.value.isGameOver.value || gameState.value.isGameWon.value)
+        {
+            val minutes = timeElapsed.value / 60
+            val seconds = timeElapsed.value % 60
 
             Button(onClick = { gameState.value.restartGame() },modifier = Modifier.padding(top = 16.dp),colors = ButtonDefaults.buttonColors(containerColor = if (darkTheme) Color(0,0,139) else Color(30, 144, 255),contentColor = Color.White))
             {
@@ -296,13 +349,25 @@ fun MinesweeperGame(modifier: Modifier = Modifier,darkTheme: Boolean) {
 
             }
 
-            Text(
-                text = "Your time was: ${timeElapsed.value}s",
-                fontSize = 18.sp,
-                color = Color.DarkGray,
-                modifier = Modifier.padding(top = 8.dp)
-            )
+            if(minutes > 0)
+            {
+                Text(
+                    text = "Your time was: ${minutes}m ${seconds}s",
+                    fontSize = 18.sp,
+                    color = Color.DarkGray,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+            else
+            {
+                Text(
+                    text = "Your time was: ${seconds}s",
+                    fontSize = 18.sp,
+                    color = Color.DarkGray,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
 
+            }
         }
 
     }
@@ -437,6 +502,8 @@ fun MineCell(game: Game, row: Int, col: Int, message: MutableState<String>,isPau
         4 to Color.Cyan,
         5 to Color.Magenta,
         6 to Color.Black,
+        7 to Color.Red,
+        8 to Color(255,0,127)
     )
 
     val textColor = when {
@@ -490,16 +557,15 @@ fun MineCell(game: Game, row: Int, col: Int, message: MutableState<String>,isPau
 @Composable
 fun PreviewMinesweeperGame() {
     Column {
-        // Dark theme preview
+
         MinesweeperTheme(darkTheme = true) {
-            MinesweeperGame(darkTheme = true)
+            MinesweeperGame(darkTheme = true, selectedDifficulty = Difficulty.EASY)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Light theme preview
         MinesweeperTheme(darkTheme = false) {
-            MinesweeperGame(darkTheme = false)
+            MinesweeperGame(darkTheme = false, selectedDifficulty = Difficulty.EASY)
         }
     }
 }
