@@ -22,11 +22,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,7 +52,9 @@ import com.example.minesweeper.ui.theme.Game
 import com.example.minesweeper.ui.theme.MinesweeperTheme
 import kotlinx.coroutines.delay
 import kotlin.system.exitProcess
-
+import com.example.minesweeper.ui.theme.InstructionsDialog
+import com.example.minesweeper.ui.theme.Difficulty
+import com.example.minesweeper.ui.theme.DifficultySelection
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -124,22 +129,37 @@ fun StartMenu(onStartGame: () -> Unit, darkTheme: Boolean, onThemeChange: (Boole
 
         Spacer(modifier = Modifier.height(80.dp))
 
-        Button(
-            onClick = { onThemeChange(!darkTheme) },
-            colors = ButtonDefaults.buttonColors(containerColor = if (darkTheme) Color(0,0,139) else Color(30, 144, 255),contentColor = Color.White),
-            shape = RoundedCornerShape(4.dp)
-        )
-        {
-            Text(if (darkTheme) "Light Mode" else "Dark Mode", fontSize = 20.sp)
-        }
-
-        Spacer(modifier = Modifier.height(80.dp))
-
         Text(text = "Select Difficulty", fontSize = 24.sp , color = if(darkTheme) Color.White else Color.Blue)
         Spacer(modifier = Modifier.height(16.dp))
         DifficultySelection(selectedDifficulty, onDifficultyChange,darkTheme)
 
-        Spacer(modifier = Modifier.height(200.dp))
+        Spacer(modifier = Modifier.height(80.dp))
+
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .padding(vertical = 8.dp)
+        ) {
+            Text(
+                text = if (darkTheme) "Dark Mode" else "Light Mode",
+                fontSize = 24.sp,
+                color = if (darkTheme) Color.White else Color.Blue
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Switch(
+                checked = darkTheme,
+                onCheckedChange = { onThemeChange(it) },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = Color(0, 0, 139),
+                    uncheckedThumbColor = Color.White,
+                    uncheckedTrackColor = Color(30, 144, 255)
+                )
+            )
+        }
+
+        Spacer(modifier = Modifier.height(120.dp))
 
         ExitButtonWithConfirmation()
     }
@@ -149,61 +169,8 @@ fun StartMenu(onStartGame: () -> Unit, darkTheme: Boolean, onThemeChange: (Boole
     }
 }
 
-enum class Difficulty(val mines: Int) {
-    EASY(10),
-    MEDIUM(15),
-    HARD(20)
-}
-
-@Composable
-fun DifficultySelection(selectedDifficulty: Difficulty, onDifficultySelected: (Difficulty) -> Unit,darkTheme: Boolean) {
-    Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
-        Difficulty.entries.forEach { difficulty ->
 
 
-            val containerColors = when {
-                (difficulty == selectedDifficulty) && darkTheme -> Color(173, 216, 230)
-                (difficulty == selectedDifficulty) && !darkTheme -> Color(25, 25, 112)
-                (selectedDifficulty != difficulty) && darkTheme -> Color(0, 0, 139)
-                else -> Color(30, 144, 255)
-            }
-            Button(
-                onClick = { onDifficultySelected(difficulty) },
-                colors = ButtonDefaults.buttonColors(containerColor = containerColors,contentColor = Color.White),
-                shape = RoundedCornerShape(4.dp)
-            )
-            {
-                Text(text = difficulty.name)
-            }
-        }
-    }
-}
-
-@Composable
-fun InstructionsDialog(onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("How to Play") },
-        text = {
-            Text(
-                "- Minesweeper is a game where you must clear the grid without triggering mines (\uD83D\uDCA3).\n" +
-                        "- Use logic to determine which tiles are safe.\n" +
-                        "- Tap a tile to reveal it. Long press to place a flag (\uD83D\uDEA9) where you suspect a mine.\n" +
-                        "- You can undo your last move once per game.\n" +
-                        "- You can pause the game as many times as you want.\n"+
-                        "- The goal is to reveal all non-mine tiles without hitting any mines!"
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0, 0, 139), contentColor = Color.White)
-            ) {
-                Text("Got it!")
-            }
-        }
-    )
-}
 
 
 @Composable
