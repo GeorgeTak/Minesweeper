@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
@@ -18,13 +19,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
@@ -41,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -48,13 +48,14 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.minesweeper.ui.theme.Game
-import com.example.minesweeper.ui.theme.MinesweeperTheme
-import kotlinx.coroutines.delay
-import kotlin.system.exitProcess
-import com.example.minesweeper.ui.theme.InstructionsDialog
 import com.example.minesweeper.ui.theme.Difficulty
 import com.example.minesweeper.ui.theme.DifficultySelection
+import com.example.minesweeper.ui.theme.ExitButtonWithConfirmation
+import com.example.minesweeper.ui.theme.Game
+import com.example.minesweeper.ui.theme.InstructionsDialog
+import com.example.minesweeper.ui.theme.MinesweeperTheme
+import com.example.minesweeper.ui.theme.PauseResumeButton
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -90,60 +91,90 @@ class MainActivity : ComponentActivity() {
     }
 }
 @Composable
-fun StartMenu(onStartGame: () -> Unit, darkTheme: Boolean, onThemeChange: (Boolean) -> Unit,selectedDifficulty: Difficulty, onDifficultyChange: (Difficulty) -> Unit)
-{
-
+fun StartMenu(
+    onStartGame: () -> Unit,
+    darkTheme: Boolean,
+    onThemeChange: (Boolean) -> Unit,
+    selectedDifficulty: Difficulty,
+    onDifficultyChange: (Difficulty) -> Unit
+) {
     var showInstructions by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier.fillMaxSize().background(if (darkTheme) Color(112, 128, 144) else Color(210, 255, 230)),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    )
-    {
-        Spacer(modifier = Modifier.height(20.dp))
-        Text(text = "Minesweeper", fontSize = 32.sp, color = if (darkTheme) Color.Blue else Color(0, 0, 180), modifier = Modifier.background(color = if (darkTheme) Color(173,216,230) else Color(200, 230, 255)).border(2.dp, if (darkTheme) Color(50,82,123) else Color(100, 130, 180)).padding(8.dp))
-
-        Spacer(modifier = Modifier.height(80.dp))
-
-
-        Button(
-            onClick = onStartGame,
-            colors = ButtonDefaults.buttonColors(containerColor = if (darkTheme) Color(0, 0, 139) else Color(30, 144, 255), contentColor = Color.White),
-            shape = RoundedCornerShape(4.dp)
-        )
-        {
-            Text("Start Game", fontSize = 20.sp)
-        }
-
-        Spacer(modifier = Modifier.height(80.dp))
-
-        Button(
-            onClick = { showInstructions = true },
-            colors = ButtonDefaults.buttonColors(containerColor = if (darkTheme) Color(0,0,139) else Color(30, 144, 255),contentColor = Color.White),
-            shape = RoundedCornerShape(4.dp)
-        )
-        {
-            Text("How to Play", fontSize = 20.sp)
-        }
-
-        Spacer(modifier = Modifier.height(80.dp))
-
-        Text(text = "Select Difficulty", fontSize = 24.sp , color = if(darkTheme) Color.White else Color.Blue)
-        Spacer(modifier = Modifier.height(16.dp))
-        DifficultySelection(selectedDifficulty, onDifficultyChange,darkTheme)
-
-        Spacer(modifier = Modifier.height(80.dp))
-
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(if (darkTheme) Color(112, 128, 144) else Color(210, 255, 230))
+    ) {
+        Column(
             modifier = Modifier
-                .padding(vertical = 8.dp)
+                .align(Alignment.Center),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = "Minesweeper",
+                fontSize = 32.sp,
+                color = if (darkTheme) Color.Blue else Color(0, 0, 180),
+                modifier = Modifier
+                    .background(if (darkTheme) Color(173, 216, 230) else Color(200, 230, 255))
+                    .border(2.dp, if (darkTheme) Color(50, 82, 123) else Color(100, 130, 180))
+                    .padding(8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(80.dp))
+
+            Button(
+                onClick = onStartGame,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (darkTheme) Color(0, 0, 139) else Color(30, 144, 255),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(4.dp)
+            ) {
+                Text("Start Game", fontSize = 20.sp)
+            }
+
+            Spacer(modifier = Modifier.height(80.dp))
+
+            Button(
+                onClick = { showInstructions = true },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (darkTheme) Color(0, 0, 139) else Color(30, 144, 255),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(4.dp)
+            ) {
+                Text("How to Play", fontSize = 20.sp)
+            }
+
+            Spacer(modifier = Modifier.height(80.dp))
+
+            Text(
+                text = "Select Difficulty",
+                fontSize = 24.sp,
+                color = if (darkTheme) Color.White else Color.Blue
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            DifficultySelection(selectedDifficulty, onDifficultyChange, darkTheme)
+
+            Spacer(modifier = Modifier.height(80.dp))
+
+            ExitButtonWithConfirmation()
+        }
+
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(top = 16.dp, start = 16.dp, bottom = 48.dp)
         ) {
             Text(
                 text = if (darkTheme) "Dark Mode" else "Light Mode",
-                fontSize = 24.sp,
+                fontSize = 20.sp,
                 color = if (darkTheme) Color.White else Color.Blue
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -159,15 +190,13 @@ fun StartMenu(onStartGame: () -> Unit, darkTheme: Boolean, onThemeChange: (Boole
             )
         }
 
-        Spacer(modifier = Modifier.height(120.dp))
 
-        ExitButtonWithConfirmation()
-    }
-    if (showInstructions)
-    {
-        InstructionsDialog(onDismiss = { showInstructions = false })
+        if (showInstructions) {
+            InstructionsDialog(onDismiss = { showInstructions = false })
+        }
     }
 }
+
 
 
 
@@ -341,103 +370,6 @@ fun MinesweeperGame(modifier: Modifier = Modifier,darkTheme: Boolean,selectedDif
 }
 
 @Composable
-fun PauseResumeButton(isPaused: MutableState<Boolean>) {
-    var showDialog by remember { mutableStateOf(false) }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(top = 1.dp, bottom = 1.dp, start = 4.dp),
-        contentAlignment = Alignment.BottomStart
-    ) {
-        Button(
-            onClick = { showDialog = true },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (isPaused.value) Color.Green else Color.Red,
-                contentColor = Color.White
-            ),
-        ) {
-            Text(if (isPaused.value) "Resume" else "Pause")
-        }
-    }
-
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text(if (isPaused.value) "Game Resumed" else "Game Paused") },
-            text = { Text(if (isPaused.value) "The game is now running." else "The game is paused.") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        isPaused.value = !isPaused.value
-                        showDialog = false
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0, 0, 139), contentColor = Color.White)
-                )
-                {
-                    Text("Got it!")
-                }
-            }
-        )
-    }
-}
-
-@Composable
-fun ExitButtonWithConfirmation() {
-    val showDialog = remember { mutableStateOf(false) }
-
-    if (showDialog.value) {
-
-        AlertDialog(
-            onDismissRequest = { showDialog.value = false },
-            title = { Text("Exit") },
-            text = { Text("Are you sure you want to exit the game?") },
-            confirmButton = {
-                Button(
-                    onClick = { exitProcess(0) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0, 0, 139),
-                        contentColor = Color.White,
-                    ),
-                )
-                {
-                    Text("Yes")
-                }
-            },
-            dismissButton = {
-                Button(
-                    onClick = { showDialog.value = false },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0, 0, 139),
-                        contentColor = Color.White,
-                    ),
-                ) {
-                    Text("No")
-                }
-            }
-        )
-    }
-
-
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-
-        Button(
-            onClick = { showDialog.value = true },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0,0,139), contentColor = Color.White),
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 32.dp)
-                .padding(end = 16.dp)
-
-        ) {
-            Text("Exit", fontWeight = FontWeight.Bold)
-        }
-    }
-}
-
-@Composable
 fun MinesweeperGrid(game: Game, message: MutableState<String>,isPaused: Boolean,darkTheme: Boolean) {
     Column(modifier = Modifier.border(2.dp, Color.LightGray).padding(2.dp))
     {
@@ -454,6 +386,7 @@ fun MinesweeperGrid(game: Game, message: MutableState<String>,isPaused: Boolean,
 @Composable
 fun MineCell(game: Game, row: Int, col: Int, message: MutableState<String>,isPaused: Boolean, darkTheme: Boolean) {
     val cellState by game.grid[row][col].state
+    val isRevealed = cellState.isRevealed
 
     val backgroundColor = when {
         cellState.isFlagged -> Color.Yellow
@@ -479,10 +412,26 @@ fun MineCell(game: Game, row: Int, col: Int, message: MutableState<String>,isPau
         else -> Color.White
     }
 
+    val alpha by animateFloatAsState(
+        targetValue = if (isRevealed) 1f else 0f,
+        animationSpec = tween(durationMillis = 500),
+        label = "alpha"
+    )
+    val scale by animateFloatAsState(
+        targetValue = if (isRevealed) 1f else 1f,
+        animationSpec = if (isRevealed) tween(durationMillis = 300, easing = FastOutSlowInEasing) else tween(0),
+        label = "scale"
+    )
+
     Box(
         modifier = Modifier
             .size(40.dp)
             .padding(2.dp)
+            .graphicsLayer {
+                this.alpha = if (isRevealed) alpha else 1f
+                this.scaleX = scale
+                this.scaleY = scale
+            }
             .background(backgroundColor, RoundedCornerShape(4.dp))
             .then(
                 if (!isPaused) Modifier.pointerInput(Unit)
