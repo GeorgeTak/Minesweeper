@@ -1,4 +1,4 @@
-package com.example.minesweeper.ui.theme
+package com.example.minesweeper.ui.theme.composables
 
 
 

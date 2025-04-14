@@ -1,4 +1,4 @@
-package com.example.minesweeper.ui.theme
+package com.example.minesweeper.ui.theme.composables
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -19,7 +19,7 @@ enum class Difficulty(val mines: Int) {
 }
 
 @Composable
-fun DifficultySelection(selectedDifficulty: Difficulty, onDifficultySelected: (Difficulty) -> Unit,darkTheme: Boolean) {
+fun DifficultySelection(selectedDifficulty: Difficulty, onDifficultySelected: (Difficulty) -> Unit, darkTheme: Boolean) {
     Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
         Difficulty.entries.forEach { difficulty ->
 

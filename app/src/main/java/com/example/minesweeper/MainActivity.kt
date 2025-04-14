@@ -48,13 +48,13 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.minesweeper.ui.theme.Difficulty
-import com.example.minesweeper.ui.theme.DifficultySelection
-import com.example.minesweeper.ui.theme.ExitButtonWithConfirmation
+import com.example.minesweeper.ui.theme.composables.Difficulty
+import com.example.minesweeper.ui.theme.composables.DifficultySelection
+import com.example.minesweeper.ui.theme.composables.ExitButtonWithConfirmation
 import com.example.minesweeper.ui.theme.Game
-import com.example.minesweeper.ui.theme.InstructionsDialog
+import com.example.minesweeper.ui.theme.composables.InstructionsDialog
 import com.example.minesweeper.ui.theme.MinesweeperTheme
-import com.example.minesweeper.ui.theme.PauseResumeButton
+import com.example.minesweeper.ui.theme.composables.PauseResumeButton
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
@@ -264,6 +264,8 @@ fun MinesweeperGame(modifier: Modifier = Modifier,darkTheme: Boolean,selectedDif
             modifier = Modifier.padding(8.dp)
         )
 
+        Spacer(modifier = Modifier.height(20.dp))
+
         if (gameState.value.isGameOver.value) {
             Text(
                 text = "Game Over!!",
@@ -288,6 +290,7 @@ fun MinesweeperGame(modifier: Modifier = Modifier,darkTheme: Boolean,selectedDif
             )
         }
 
+        Spacer(modifier = Modifier.height(20.dp))
 
         MinesweeperGrid(gameState.value, message,isPaused.value ,darkTheme)
 
