@@ -23,17 +23,13 @@ fun PauseResumeButton(isPaused: MutableState<Boolean>) {
     var showDialog by remember { mutableStateOf(false) }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(top = 1.dp, bottom = 16.dp, start = 24.dp),
-        contentAlignment = Alignment.BottomStart
+        modifier = Modifier.fillMaxSize()
     ) {
         Button(
             onClick = { showDialog = true },
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (isPaused.value) Color.Green else Color.Red,
-                contentColor = Color.White
-            ),
+                containerColor = if (isPaused.value) Color.Green else Color.Red, contentColor = Color.White),
+            modifier = Modifier.align(Alignment.BottomStart).padding(bottom = 16.dp).padding(start = 16.dp)
         ) {
             Text(if (isPaused.value) "Resume" else "Pause")
         }
