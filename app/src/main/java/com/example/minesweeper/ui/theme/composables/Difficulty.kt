@@ -12,10 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-enum class Difficulty(val mines: Int) {
-    EASY(10),
-    MEDIUM(12),
-    HARD(16)
+enum class Difficulty(val rows: Int, val cols: Int, val mines: Int) {
+    EASY(8, 8, 10),
+    MEDIUM(9, 9, 12),
+    HARD(10, 9, 15)
 }
 
 @Composable

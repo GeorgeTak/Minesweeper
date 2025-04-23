@@ -204,13 +204,26 @@ fun StartMenu(
 
 @Composable
 fun MinesweeperGame(modifier: Modifier = Modifier,darkTheme: Boolean,selectedDifficulty: Difficulty) {
-    val rows = 8
-    val cols = 8
+    val rows = selectedDifficulty.rows
+    val cols = selectedDifficulty.cols
     val mineCount = selectedDifficulty.mines
     val gameState = remember { mutableStateOf(Game(rows, cols, mineCount)) }
     val timeElapsed = remember { mutableStateOf(0) }
     val message = remember { mutableStateOf("") }
     val isPaused = remember { mutableStateOf(false) }
+
+
+    val gameOverAlpha by animateFloatAsState(
+        targetValue = if (gameState.value.isGameOver.value) 1f else 0f,
+        animationSpec = tween(durationMillis = 2000), label = ""
+    )
+
+    val gameWonAlpha by animateFloatAsState(
+        targetValue = if (gameState.value.isGameWon.value) 1f else 0f,
+        animationSpec = tween(durationMillis = 2000), label = ""
+    )
+
+
 
     LaunchedEffect(gameState.value.isGameOver.value, gameState.value.isGameWon.value)
     {
@@ -229,18 +242,6 @@ fun MinesweeperGame(modifier: Modifier = Modifier,darkTheme: Boolean,selectedDif
     }
 
 
-    val gameOverAlpha by animateFloatAsState(
-        targetValue = if (gameState.value.isGameOver.value) 1f else 0f,
-        animationSpec = tween(durationMillis = 2000), label = ""
-    )
-
-    val gameWonAlpha by animateFloatAsState(
-        targetValue = if (gameState.value.isGameWon.value) 1f else 0f,
-        animationSpec = tween(durationMillis = 2000), label = ""
-    )
-
-
-
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -255,6 +256,13 @@ fun MinesweeperGame(modifier: Modifier = Modifier,darkTheme: Boolean,selectedDif
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(16.dp)
         )
+        Text(
+            text = "Difficulty: ${selectedDifficulty.name}",
+            fontSize = 18.sp,
+            color = Color.DarkGray,
+            fontStyle = FontStyle.Italic,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
 
         Text(
             text = "Flags remaining: ${gameState.value.flagsRemaining.value} ",
@@ -268,7 +276,7 @@ fun MinesweeperGame(modifier: Modifier = Modifier,darkTheme: Boolean,selectedDif
 
         if (gameState.value.isGameOver.value) {
             Text(
-                text = "Game Over!!",
+                text = "That mine got you good!",
                 fontSize = 20.sp,
                 color = Color.Red.copy(alpha = gameOverAlpha),
                 fontStyle = FontStyle.Italic,
@@ -279,7 +287,7 @@ fun MinesweeperGame(modifier: Modifier = Modifier,darkTheme: Boolean,selectedDif
             )
         } else if (gameState.value.isGameWon.value) {
             Text(
-                text = "Congrats, you won!!",
+                text = "Victory! 🏆 You cleared them all!",
                 fontSize = 20.sp,
                 color = Color.Green.copy(alpha = gameWonAlpha),
                 fontStyle = FontStyle.Italic,
