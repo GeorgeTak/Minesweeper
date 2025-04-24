@@ -48,12 +48,12 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.minesweeper.ui.theme.Game
+import com.example.minesweeper.ui.theme.MinesweeperTheme
 import com.example.minesweeper.ui.theme.composables.Difficulty
 import com.example.minesweeper.ui.theme.composables.DifficultySelection
 import com.example.minesweeper.ui.theme.composables.ExitButtonWithConfirmation
-import com.example.minesweeper.ui.theme.Game
 import com.example.minesweeper.ui.theme.composables.InstructionsDialog
-import com.example.minesweeper.ui.theme.MinesweeperTheme
 import com.example.minesweeper.ui.theme.composables.PauseResumeButton
 import kotlinx.coroutines.delay
 
@@ -382,12 +382,13 @@ fun MinesweeperGame(modifier: Modifier = Modifier,darkTheme: Boolean,selectedDif
 
 @Composable
 fun MinesweeperGrid(game: Game, message: MutableState<String>,isPaused: Boolean,darkTheme: Boolean) {
+    val revealCounter = remember { mutableStateOf(0) }
     Column(modifier = Modifier.border(2.dp, Color.LightGray).padding(2.dp))
     {
         for (row in 0 until game.rows) {
             Row {
                 for (col in 0 until game.cols) {
-                    MineCell(game, row, col,message,isPaused,darkTheme)
+                    MineCell(game, row, col,message,isPaused,darkTheme, revealCounter)
                 }
             }
         }
@@ -395,7 +396,7 @@ fun MinesweeperGrid(game: Game, message: MutableState<String>,isPaused: Boolean,
 }
 
 @Composable
-fun MineCell(game: Game, row: Int, col: Int, message: MutableState<String>,isPaused: Boolean, darkTheme: Boolean) {
+fun MineCell(game: Game, row: Int, col: Int, message: MutableState<String>,isPaused: Boolean, darkTheme: Boolean,revealCounter: MutableState<Int>) {
     val cellState by game.grid[row][col].state
     val isRevealed = cellState.isRevealed
 
@@ -433,6 +434,15 @@ fun MineCell(game: Game, row: Int, col: Int, message: MutableState<String>,isPau
         animationSpec = if (isRevealed) tween(durationMillis = 300, easing = FastOutSlowInEasing) else tween(0),
         label = "scale"
     )
+    val encouragements = listOf(
+        "Nice move!",
+        "You're doing great!",
+        "Keep going!",
+        "Looking sharp!",
+        "Boom-free zone!",
+        "Strategy on point!",
+        "You're a pro!"
+    )
 
     Box(
         modifier = Modifier
@@ -450,10 +460,26 @@ fun MineCell(game: Game, row: Int, col: Int, message: MutableState<String>,isPau
                     if (!game.isGameOver.value && !game.isGameWon.value) {
                         detectTapGestures(
                             onTap = {
-                                if (game.revealCell(row, col)) {
+                                val preState = game.grid[row][col].state.value
+                                val wasRevealed = preState.isRevealed
+                                val wasFlagged = preState.isFlagged
+                                val wasMine = preState.isMine
+
+                                val alreadyRevealed = game.revealCell(row, col)
+
+                                if (alreadyRevealed) {
                                     message.value = "This tile is already revealed!"
                                 } else {
-                                    message.value = ""
+                                    if (!wasRevealed && !wasFlagged && !wasMine) {
+                                        revealCounter.value++
+                                        if (revealCounter.value % 3 == 0) {
+                                            message.value = encouragements.random()
+                                        } else {
+                                            message.value = ""
+                                        }
+                                    } else {
+                                        message.value = ""
+                                    }
                                 }
                             },
                             onLongPress = { game.toggleFlag(row, col) }
