@@ -441,8 +441,17 @@ fun MineCell(game: Game, row: Int, col: Int, message: MutableState<String>,isPau
         "Looking sharp!",
         "Boom-free zone!",
         "Strategy on point!",
-        "You're a pro!"
+        "You're a pro!",
+        "Good job!",
+        "Well done!",
+        "Great choice!",
+        "Keep it up!",
+        "You're on fire!",
+        "Smooth move!",
+        "Solid play!",
+        "That was clean!"
     )
+
 
     Box(
         modifier = Modifier
@@ -465,6 +474,11 @@ fun MineCell(game: Game, row: Int, col: Int, message: MutableState<String>,isPau
                                 val wasFlagged = preState.isFlagged
                                 val wasMine = preState.isMine
 
+                                val revealedSafeCells = game.grid.flatten().count {
+                                    val state = it.state.value
+                                    state.isRevealed && !state.isMine
+                                }
+                                val remainingSafeCells = game.totalSafeCells - revealedSafeCells
                                 val alreadyRevealed = game.revealCell(row, col)
 
                                 if (alreadyRevealed) {
@@ -472,13 +486,16 @@ fun MineCell(game: Game, row: Int, col: Int, message: MutableState<String>,isPau
                                 } else {
                                     if (!wasRevealed && !wasFlagged && !wasMine) {
                                         revealCounter.value++
-                                        if (revealCounter.value % 3 == 0) {
+
+                                        if (remainingSafeCells == 7) {
+                                            message.value = "You're getting close, only 7 safe moves left!"
+                                        } else if (remainingSafeCells == 5) {
+                                            message.value = "Almost there, 5 safe moves left!"
+                                        } else if (revealCounter.value % 3 == 0 && revealCounter.value > 0 && remainingSafeCells > 7) {
                                             message.value = encouragements.random()
                                         } else {
                                             message.value = ""
                                         }
-                                    } else {
-                                        message.value = ""
                                     }
                                 }
                             },

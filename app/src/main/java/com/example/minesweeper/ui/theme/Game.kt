@@ -19,6 +19,8 @@ class Game(val rows: Int, val cols: Int, private val mineCount: Int) {
     var isGameWon =  mutableStateOf(false)
     var flagsRemaining = mutableStateOf(mineCount)
 
+    val totalSafeCells = rows * cols - mineCount
+
     var lastMove: Triple<Int, Int, Cell?>? = null
     var undoUsed = false
 
